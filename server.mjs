@@ -7,7 +7,8 @@ const port = process.env.PORT || 3000;
 const accessToken = process.env.SQUARE_ACCESS_TOKEN;
 const locationId = 'L864YNVDSF8ZK';
 const squareBase = 'https://connect.squareupsandbox.com';
-
+const productionAccessToken = process.env.SQUARE_PRODUCTION_ACCESS_TOKEN;
+const productionLocationId = process.env.SQUARE_PRODUCTION_LOCATION_ID;
 app.use(express.json());
 app.use(express.static('public'));
 
