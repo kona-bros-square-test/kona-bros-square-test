@@ -52,5 +52,32 @@ console.log('Token configured:', Boolean(accessToken));
     res.status(500).json({ error: error?.message || 'Unexpected server error.' });
   }
 });
+app.get('/api/debug-locations', async (req, res) => {
+  try {
+    const response = await fetch(`${squareBase}/v2/locations`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Square-Version': '2026-08-19',
+        'Content-Type': 'application/json'
+      }
+    });
 
+    const data = await response.json();
+
+    res.status(response.status).json({
+      status: response.status,
+      locations: (data.locations || []).map(location => ({
+        id: location.id,
+        name: location.name,
+        status: location.status,
+        capabilities: location.capabilities,
+        country: location.country,
+        currency: location.currency
+      })),
+      errors: data.errors || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(port, () => console.log(`Kona Bros Square Sandbox running on http://localhost:${port}`));
