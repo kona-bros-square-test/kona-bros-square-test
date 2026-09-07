@@ -107,4 +107,40 @@ app.get('/api/catalog-items', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+app.get('/api/production-catalog-items', async (req, res) => {
+  try {
+    if (!productionAccessToken) {
+      return res.status(500).json({
+        error: 'SQUARE_PRODUCTION_ACCESS_TOKEN is not configured'
+      });
+    }
+
+    const response = await fetch(
+      'https://connect.squareup.com/v2/catalog/search-catalog-items',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${productionAccessToken}`,
+          'Square-Version': '2026-08-19',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          enabled_location_ids: [productionLocationId],
+          limit: 100
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    res.status(response.status).json({
+      status: response.status,
+      items: data.items || [],
+      matched_variation_ids: data.matched_variation_ids || [],
+      errors: data.errors || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(port, () => console.log(`Kona Bros Square Sandbox running on http://localhost:${port}`));
