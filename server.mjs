@@ -39,6 +39,10 @@ app.post('/api/payments', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('Square response status:', response.status);
+console.log('Square response:', JSON.stringify(data, null, 2));
+console.log('Square location:', locationId);
+console.log('Token configured:', Boolean(accessToken));
     if (!response.ok) {
       const detail = data?.errors?.map(e => e.detail || e.code).join('; ') || 'Square payment request failed.';
       return res.status(response.status).json({ error: detail });
