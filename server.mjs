@@ -80,4 +80,31 @@ app.get('/api/debug-locations', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+app.get('/api/catalog-items', async (req, res) => {
+  try {
+    const response = await fetch(`${squareBase}/v2/catalog/search-catalog-items`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Square-Version': '2026-08-19',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        enabled_location_ids: [locationId],
+        limit: 100
+      })
+    });
+
+    const data = await response.json();
+
+    res.status(response.status).json({
+      status: response.status,
+      items: data.items || [],
+      matched_variation_ids: data.matched_variation_ids || [],
+      errors: data.errors || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(port, () => console.log(`Kona Bros Square Sandbox running on http://localhost:${port}`));
