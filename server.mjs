@@ -145,3 +145,96 @@ app.get('/api/production-catalog-items', async (req, res) => {
   }
 });
 app.listen(port, () => console.log(`Kona Bros Square Sandbox running on http://localhost:${port}`));
+app.get('/api/menu', async (req, res) => {
+  try {
+    if (!productionAccessToken) {
+      return res.status(500).json({
+        error: 'Production Square token is not configured'
+      });
+    }
+
+    let allItems = [];
+    let cursor = null;
+
+    do {
+      const body = {
+        enabled_location_ids: [productionLocationId],
+        limit: 100
+      };
+
+      if (cursor) body.cursor = cursor;
+
+      const response = await fetch(
+        'https://connect.squareup.com/v2/catalog/search-catalog-items',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${productionAccessToken}`,
+            'Square-Version': '2026-08-19',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return res.status(response.status).json({
+          error: data.errors || 'Unable to load Square catalog'
+        });
+      }
+
+      allItems.push(...(data.items || []));
+      cursor = data.cursor || null;
+
+    } while (cursor);
+
+    const menu = allItems
+      .filter(item =>
+        item.type === 'ITEM' &&
+        !item.is_deleted &&
+        item.item_data
+      )
+      .map(item => {
+        const itemData = item.item_data;
+
+        const variations = (itemData.variations || [])
+          .filter(v => !v.is_deleted && v.item_variation_data)
+          .map(v => {
+            const variation = v.item_variation_data;
+            const priceMoney = variation.price_money;
+
+            return {
+              id: v.id,
+              name: variation.name || 'Regular',
+              priceCents: priceMoney?.amount ?? null,
+              price:
+                priceMoney?.amount != null
+                  ? `$${(priceMoney.amount / 100).toFixed(2)}`
+                  : null,
+              currency: priceMoney?.currency || 'USD'
+            };
+          });
+
+        return {
+          id: item.id,
+          name: itemData.name || 'Unnamed item',
+          description: itemData.description || '',
+          variations
+        };
+      })
+      .filter(item => item.variations.length > 0);
+
+    res.json({
+      locationId: productionLocationId,
+      count: menu.length,
+      items: menu
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
