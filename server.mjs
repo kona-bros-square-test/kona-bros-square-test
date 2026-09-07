@@ -32,7 +32,7 @@ app.post('/api/payments', async (req, res) => {
         source_id: sourceId,
         idempotency_key: crypto.randomUUID(),
         amount_money: { amount: 100, currency: 'USD' },
-        location_id: locationId,
+        
         autocomplete: true,
         note: 'Kona Bros app Sandbox connection test'
       })
